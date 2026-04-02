@@ -1,0 +1,3 @@
+# For local dev only. Do not commit real secrets.
+TRILIUM_ETAPI_TOKEN=replace_me
+TRILIUM_BASE_URL=https://your-trilium.example.com

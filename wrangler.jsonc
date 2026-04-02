@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trilium-tree-proxy-template",
+  "main": "index.ts",
+  "compatibility_date": "2026-03-28",
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "TRILIUM_BASE_URL": "https://your-trilium.example.com",
+    "ROOT_NOTE_ID": "root",
+    "ALLOW_ORIGIN": "*",
+    "CACHE_MAX_AGE": "300",
+    "MAP_MAX_NODES": "1200"
+  }
+}
