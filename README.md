@@ -1,69 +1,71 @@
 <div align="center">
 
-# trilium-tree-proxy Template
+# trilium-tree-proxy-template
 
-一个部署在 **Cloudflare Workers** 的 Trilium ETAPI 树结构代理模板。
+A production-oriented **Cloudflare Workers** template for exposing a safe, frontend-friendly **Trilium ETAPI tree API**.
 
-适用于：
-- 前端懒加载树结构
-- `/about` 页面知识地图
-- 图谱可视化前的数据代理层
+Turn your private Trilium note hierarchy into a public tree endpoint for blogs, note maps, knowledge graphs, and lazy-loaded navigation — **without exposing your ETAPI token**.
 
 </div>
 
 ---
 
-## 项目简介
+## Features
 
-这个模板仓库用于快速搭建一个 Trilium 树结构代理服务。
-
-根据当前实现，它支持两种主要输出模式：
-
-1. **懒加载一层树结构**：用于前端逐层展开节点
-2. **树图兼容结构**：用于知识地图 / 图谱可视化
-
-它的核心目标是：
-
-> 在不暴露 `TRILIUM_ETAPI_TOKEN` 的前提下，把 Trilium 的笔记树结构提供给前端项目使用。
-
----
-
-## 当前实现能力
-
-### 支持的接口
-- `GET /`
-- `GET /healthz`
-- `GET /api/trilium-tree`
-- `GET /api/note-map/tree`
-
-### 支持的查询参数
-- `rootNoteId`
-- `debug=1`
-
-### 支持的特性
-- CORS
-- 缓存头
-- 节点过滤
-- 图谱兼容输出
-- 调试信息输出
+- **Cloudflare Workers ready**: lightweight, edge-deployable proxy template
+- **Token-safe design**: keeps `TRILIUM_ETAPI_TOKEN` on the server side
+- **Two response modes**:
+  - lazy tree API for frontend tree components
+  - note-map graph API for visual knowledge maps
+- **CORS support** for cross-origin frontend consumption
+- **Cache headers** for better public API performance
+- **Node filtering** for hidden/system notes
+- **Debug mode** to inspect fetch behavior and failures
+- **TypeScript implementation** with simple local development workflow
 
 ---
 
-## 模式说明
+## Use Cases
 
-### 1. `/api/trilium-tree`
-返回懒加载一层树结构，适合：
-- 前端树组件
-- About 页面展开式知识树
-- 大规模笔记树的按需加载
+This template is useful when you want to:
 
-### 2. `/api/note-map/tree`
-返回更适合图谱可视化的结构，适合：
-- Note Map 风格页面
-- 节点关系图
-- 前端图谱布局系统
+- build a public **knowledge tree** from Trilium
+- power an **About / Notes / Map** page in a blog
+- load a large Trilium tree **on demand** instead of returning the whole tree at once
+- generate a **graph-friendly structure** for visualization libraries
+- keep Trilium private while exposing only a curated tree API
 
-返回核心字段包括：
+---
+
+## Available Endpoints
+
+### `GET /`
+Basic service information.
+
+### `GET /healthz`
+Health check endpoint for uptime monitoring.
+
+### `GET /api/trilium-tree`
+Returns a **one-level lazy tree structure**.
+
+Best for:
+- expandable sidebar trees
+- lazy-loaded note navigation
+- public tree browsing in frontend apps
+
+Supported query params:
+- `rootNoteId`: override the default root note
+- `debug=1`: include debug info in the response
+
+### `GET /api/note-map/tree`
+Returns a **graph-oriented tree representation**.
+
+Best for:
+- note map pages
+- knowledge graph visualizations
+- relationship-based frontend rendering
+
+Typical response fields include:
 - `notes`
 - `links`
 - `noteIdToDescendantCountMap`
@@ -72,46 +74,74 @@
 
 ---
 
-## 过滤规则
+## Filtering Rules
 
-当前模板代码包含以下规则：
+By default, the template excludes notes that should not appear in the public tree:
 
-- 忽略 `_` 前缀系统隐藏节点
-- 忽略带 `excludeFromNoteMap` label 的节点
-- 在后代统计中对 `imageLink` 关系做特殊处理
-- 树图模式下支持读取 `color` label
+- notes whose `noteId` starts with `_`
+- notes with the label `excludeFromNoteMap`
+- special `imageLink` relations are handled separately during descendant counting
+- note-map mode reads the optional `color` label for visualization metadata
 
----
-
-## 环境变量
-
-| 变量名 | 说明 |
-|---|---|
-| `TRILIUM_BASE_URL` | Trilium 服务地址 |
-| `TRILIUM_ETAPI_TOKEN` | Trilium ETAPI Token |
-| `ROOT_NOTE_ID` | 默认根节点 ID |
-| `ALLOW_ORIGIN` | 允许跨域来源 |
-| `CACHE_MAX_AGE` | 缓存秒数 |
-| `MAP_MAX_NODES` | 图谱模式最大节点数 |
-
-> 注意：当前模板代码不使用 `MAX_DEPTH`。
+This makes it easier to keep internal/system nodes out of your public output.
 
 ---
 
-## 本地开发
+## Environment Variables
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `TRILIUM_BASE_URL` | Yes | Your Trilium base URL, e.g. `https://trilium.example.com` |
+| `TRILIUM_ETAPI_TOKEN` | Yes | Trilium ETAPI token |
+| `ROOT_NOTE_ID` | No | Default root note ID used by tree endpoints |
+| `ALLOW_ORIGIN` | No | Allowed CORS origin, defaults to `*` |
+| `CACHE_MAX_AGE` | No | Public cache seconds, defaults to `300` |
+| `MAP_MAX_NODES` | No | Max node count for note-map mode |
+
+> Note: the current implementation does **not** use `MAX_DEPTH`.
+
+---
+
+## Quick Start
+
+### 1. Install dependencies
 
 ```bash
 npm install
+```
+
+### 2. Prepare local variables
+
+Create a local development file based on the example:
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+Then fill in your real values:
+
+```dotenv
+TRILIUM_BASE_URL=https://your-trilium.example.com
+TRILIUM_ETAPI_TOKEN=replace_me
+```
+
+### 3. Start local development
+
+```bash
 npm run dev
+```
+
+### 4. Type-check
+
+```bash
 npm run check
 ```
 
-本地变量示例见：
-- `.dev.vars.example`
-
 ---
 
-## 部署
+## Deployment
+
+### Deploy to Cloudflare Workers
 
 ```bash
 wrangler login
@@ -119,17 +149,69 @@ wrangler secret put TRILIUM_ETAPI_TOKEN
 wrangler deploy
 ```
 
----
-
-## 适用场景
-
-- 个人博客 About 页面知识地图
-- Trilium 笔记树前端组件
-- 与 `longblog-template` 等前端模板联动
-- 与独立自动化服务仓库配合使用
+If you want to define non-secret variables, configure them in `wrangler.jsonc` or the Cloudflare dashboard.
 
 ---
 
-## 一句话总结
+## Example Requests
 
-`trilium-tree-proxy Template` 是一个基于 Cloudflare Workers 的 Trilium 树结构代理模板，可同时服务于前端树组件和知识图谱场景。
+### Lazy tree mode
+
+```bash
+curl 'https://your-worker.example.com/api/trilium-tree?rootNoteId=xxxxxxxx'
+```
+
+### Graph mode
+
+```bash
+curl 'https://your-worker.example.com/api/note-map/tree?rootNoteId=xxxxxxxx'
+```
+
+### Debug mode
+
+```bash
+curl 'https://your-worker.example.com/api/trilium-tree?debug=1'
+```
+
+---
+
+## Project Structure
+
+```text
+.
+├── index.ts           # Worker entry and API implementation
+├── package.json       # npm scripts and dependencies
+├── wrangler.jsonc     # Cloudflare Workers configuration
+├── .dev.vars.example  # local env example
+├── CONTRIBUTING.md
+├── SECURITY.md
+└── LICENSE
+```
+
+---
+
+## Security Notes
+
+- Never expose `TRILIUM_ETAPI_TOKEN` to the browser.
+- Prefer setting a specific `ALLOW_ORIGIN` instead of `*` for production.
+- Review your Trilium labels and hidden notes before making the API public.
+- Use Cloudflare secrets for sensitive values.
+
+---
+
+## Who This Template Is For
+
+This repository is a good fit if you:
+
+- use **Trilium as a source of truth**
+- want a **public read-only tree API**
+- deploy infrastructure on **Cloudflare Workers**
+- need a reusable starting point instead of building a proxy from scratch
+
+---
+
+## License
+
+Released under the repository license.
+
+If this template helps your project, feel free to fork it and adapt the filtering rules and output shape to your own frontend needs.
